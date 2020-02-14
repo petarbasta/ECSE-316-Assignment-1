@@ -3,19 +3,24 @@ import java.nio.ByteBuffer;
 
 public class DnsResponse {
 	private byte[] response;
+	private byte[] id;
 	private Record[] answers;
 	private Record[] additionalRecords;
 	private boolean QR, AA;
 	private int RCODE, ANCOUNT, NSCOUNT, ARCOUNT;
 
-	public DnsResponse(byte[] response, int length, QueryType queryType) {
+	public DnsResponse(byte[] response, int length, QueryType queryType, byte[] id) {
 		this.response = response;
+		this.id = new byte[2];
 
 		// Make sure response matches request type
 		checkQueryTypeMatches(queryType);
 
 		// Read packet header
 		this.getHeader();
+		
+		// Make sure Id matches
+		this.checkIDMatches(id);
 
 		// Make sure no errors in response
 		try {
@@ -56,6 +61,15 @@ public class DnsResponse {
 			throw new RuntimeException("ERROR \t Response does not match request sent");
 		}
 	}
+	
+	private void checkIDMatches(byte[] id) {
+		for(int i = 0; i < 2; i++) {
+			if (this.id[i] != id[i]) {
+				System.out.println("Response ID does not match request ID");
+				System.exit(1);
+			}
+		}
+	}
 
 	public void printRecords() {
 		if (this.ANCOUNT == 0) {
@@ -64,7 +78,7 @@ public class DnsResponse {
 			System.out.println("***Answer Section (" + this.ANCOUNT + " records)***");
 
 			for (Record record : answers) {
-				record.outputRecord();
+				record.printRecord();
 			}
 			System.out.println();
 
@@ -73,13 +87,17 @@ public class DnsResponse {
 				System.out.println("***Additional Section (" + this.ARCOUNT + " records)***");
 
 				for (Record record : additionalRecords) {
-					record.outputRecord();
+					record.printRecord();
 				}
 			}
 		}
 	}
 
 	public void getHeader() {
+		// ID
+		id[0] = response[0];
+		id[1] = response[1];
+		
 		// QR
 		this.QR = ((response[2] >> 7) & 1) == 1;
 
@@ -136,7 +154,11 @@ public class DnsResponse {
 		byte[] bytesRDLength = { response[counter], response[counter + 1] };
 		int RDLENGTH = ByteBuffer.wrap(bytesRDLength).getShort();
 		counter += 2;
-
+		
+		// RDATA | PREF for MX
+		byte[] bytesPref = { response[counter], response[counter + 1] };
+		int pref = ByteBuffer.wrap(bytesPref).getShort();
+		
 		switch (getQueryType(bytesQTYPE)) {
 		case A:
 			answer.setDomain(getDomainAType(counter));
@@ -146,6 +168,7 @@ public class DnsResponse {
 			break;
 		case MX:
 			answer.setDomain(getDomainByIndex(counter + 2));
+			answer.setPref("" + pref);
 			break;
 		case CNAME:
 			answer.setDomain(getDomainByIndex(counter));

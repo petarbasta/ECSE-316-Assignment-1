@@ -1,23 +1,22 @@
 import java.nio.ByteBuffer;
-import java.util.Random;
 
 public class DnsRequest {
 
 	private String domainName;
 	private QueryType queryType;
+	private byte[] randomID;
 
-	public DnsRequest(String domain, QueryType queryType) {
+	public DnsRequest(String domain, QueryType queryType, byte[] randomID) {
 		this.domainName = domain;
 		this.queryType = queryType;
+		this.randomID = randomID;
 	}
 
 	public byte[] createHeader() {
 		ByteBuffer header = ByteBuffer.allocate(12);
 
 		// Random 16 bit ID for each request
-		byte[] randomID = new byte[2];
-		new Random().nextBytes(randomID);
-		header.put(randomID);
+		header.put(this.randomID);
 
 		// QR + OPCODE + AA + TC + RD
 		header.put((byte) 0x10000001);

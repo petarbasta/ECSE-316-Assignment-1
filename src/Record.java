@@ -4,12 +4,13 @@ public class Record {
 	private int lengthBytes;
 	private int ttl;
 	private String domain;
+	private String pref = "";
 
 	public Record(boolean auth) {
 		this.auth = auth;
 	}
 
-	public void outputRecord() {
+	public void printRecord() {
 		switch (this.queryType) {
 		case A:
 			System.out.print("IP \t");
@@ -26,7 +27,7 @@ public class Record {
 		default:
 			break;
 		}
-		System.out.println(this.domain + "\t" + this.ttl + "\t" + (this.auth ? "auth" : "nonauth"));
+		System.out.println(this.domain + "\t" + this.pref + "\t" + this.ttl  + "\t" + (this.auth ? "auth" : "nonauth"));
 	}
 
 	public void setQueryType(QueryType queryType) {
@@ -47,5 +48,9 @@ public class Record {
 
 	public void setDomain(String domain) {
 		this.domain = domain;
+	}
+	
+	public void setPref(String pref) {
+		this.pref = pref;
 	}
 }

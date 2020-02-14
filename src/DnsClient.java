@@ -3,6 +3,7 @@ import java.net.*;
 import java.util.Arrays;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
+import java.util.Random;
 
 public class DnsClient {
 
@@ -45,7 +46,12 @@ public class DnsClient {
 
 			// Get address from IP
 			InetAddress inetaddress = InetAddress.getByAddress(serverIP);
-			DnsRequest request = new DnsRequest(domainName, queryType);
+			
+			// Create random ID
+			byte[] randomID = new byte[2];
+			new Random().nextBytes(randomID);
+			
+			DnsRequest request = new DnsRequest(domainName, queryType, randomID);
 
 			byte[] requestData = request.getRequest();
 			byte[] responseData = new byte[1024];
@@ -66,7 +72,7 @@ public class DnsClient {
 			System.out.println();
 
 			// Unpack response
-			DnsResponse response = new DnsResponse(responsePacket.getData(), requestData.length, queryType);
+			DnsResponse response = new DnsResponse(responsePacket.getData(), requestData.length, queryType, randomID);
 			response.printRecords();
 
 		} catch (SocketTimeoutException e) {
